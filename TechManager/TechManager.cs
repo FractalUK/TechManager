@@ -138,10 +138,8 @@ namespace TechManager
 
         void selectTree()
         {
+            cfgFile = comboBoxControl.SelectedItemIndex < techConfigs.Count() ? techConfigs.ElementAt(comboBoxControl.SelectedItemIndex) : techConfigs.FirstOrDefault();
             // save choice
-
-
-
 
             InputLockManager.RemoveControlLock(lockID);
             renderWindow = false;
