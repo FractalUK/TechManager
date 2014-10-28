@@ -37,7 +37,6 @@ namespace TechManager
     [KSPAddon(KSPAddon.Startup.Instantly, true)]
     public class TechManager : MonoBehaviour
     {
-        static string cfgFileName;
         static ConfigNode cfgFile;
 
         static bool prepForCreation = false;
@@ -50,6 +49,13 @@ namespace TechManager
         static RDNode[] stockNodes;
         static Dictionary<string, string> stockTechRequired;
         static Dictionary<string, GameObject> newNodes = new Dictionary<string, GameObject>();
+
+        static bool renderWindow = false;
+        static GUIContent[] listItems;
+        static GUIStyle listStyle;
+        static ComboBox comboBoxControl;
+        static IEnumerable<ConfigNode> techConfigs;
+        static string lockID = ")*Y)YHGOHGO)";
 
         void Start()
         {
@@ -94,8 +100,51 @@ namespace TechManager
             }
             if (scene == GameScenes.SPACECENTER)
             {
+                //RenderingManager.AddToPostDrawQueue(0, OnGUI);
+                renderWindow = true;
                 cfgFile = GameDatabase.Instance.GetConfigNodes("TECHNOLOGY_TREE_DEFINITION").FirstOrDefault();
+                techConfigs = GameDatabase.Instance.GetConfigNodes("TECHNOLOGY_TREE_DEFINITION").Where(cfg => cfg.HasValue("id"));
+                listItems = techConfigs.Select(cfg => new GUIContent(cfg.GetValue("id"))).ToArray();
+                
+                string techTreeName = cfgFile.HasValue("id") ? cfgFile.GetValue("id") : "";
+                Debug.Log("Loading Tech Tree " + techTreeName);
+                
+                listStyle = new GUIStyle();
+                listStyle.normal.textColor = Color.white;
+                listStyle.onHover.background = listStyle.hover.background = new Texture2D(2, 2);
+                listStyle.padding.left = listStyle.padding.right = listStyle.padding.top = listStyle.padding.bottom = 4;
+
+                comboBoxControl = new ComboBox(new Rect(Screen.width / 2 - 250, Screen.height / 2, 350, 20), listItems[0], listItems, listStyle);
             }
+        }
+
+        void OnGUI()
+        {
+            if (renderWindow)
+            {
+                InputLockManager.SetControlLock(lockID);
+                GUILayout.BeginArea(new Rect(Screen.width / 2 - 250, Screen.height / 2 - 30, 500, 60), "TechManager Tree Selector", GUI.skin.window);
+                GUILayout.BeginVertical();
+                GUILayout.BeginHorizontal();
+                GUILayout.Label("", GUILayout.ExpandWidth(true));
+                if (GUILayout.Button("Select", GUILayout.ExpandWidth(false))) selectTree();
+                GUILayout.EndHorizontal();
+                GUILayout.EndVertical();
+                GUILayout.EndArea();
+
+                comboBoxControl.Show();
+            }
+        }
+
+        void selectTree()
+        {
+            // save choice
+
+
+
+
+            InputLockManager.RemoveControlLock(lockID);
+            renderWindow = false;
         }
 
         void OnGUIRnDComplexSpawn()

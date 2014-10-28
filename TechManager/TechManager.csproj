@@ -46,6 +46,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ComboBox.cs" />
     <Compile Include="TechManager.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
