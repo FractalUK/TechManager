@@ -20,25 +20,23 @@ namespace TechManager
         private string buttonStyle;
         private string boxStyle;
         private GUIStyle listStyle;
+        private IDictionary<String, Action<String>> actionDictionary;
 
-        public ComboBox(Rect rect, GUIContent buttonContent, GUIContent[] listContent, GUIStyle listStyle)
+        public int SelectedItemIndex
+        {
+            get { return selectedItemIndex; }
+            private set { selectedItemIndex = value; }
+        }
+
+        public ComboBox(Rect rect, IDictionary<String, Action<String>> actionDictionary, GUIStyle listStyle)
         {
             this.rect = rect;
-            this.buttonContent = buttonContent;
-            this.listContent = listContent;
             this.buttonStyle = "button";
             this.boxStyle = "box";
             this.listStyle = listStyle;
-        }
-
-        public ComboBox(Rect rect, GUIContent buttonContent, GUIContent[] listContent, string buttonStyle, string boxStyle, GUIStyle listStyle)
-        {
-            this.rect = rect;
-            this.buttonContent = buttonContent;
-            this.listContent = listContent;
-            this.buttonStyle = buttonStyle;
-            this.boxStyle = boxStyle;
-            this.listStyle = listStyle;
+            this.actionDictionary = actionDictionary;
+            this.listContent = actionDictionary.Keys.Select(ky => new GUIContent(ky)).ToArray();
+            this.buttonContent = listContent.FirstOrDefault();
         }
 
         public int Show()
@@ -100,16 +98,11 @@ namespace TechManager
             return selectedItemIndex;
         }
 
-        public int SelectedItemIndex
+        public void PerformSelectedAction()
         {
-            get
-            {
-                return selectedItemIndex;
-            }
-            set
-            {
-                selectedItemIndex = value;
-            }
+            GUIContent selectedContent = listContent[this.selectedItemIndex];
+            KeyValuePair<String, Action<String>> keyvalue = this.actionDictionary.FirstOrDefault(kvp => kvp.Key == selectedContent.text);
+            if (keyvalue.Value != null && keyvalue.Key != null) keyvalue.Value(keyvalue.Key);
         }
     }
 }

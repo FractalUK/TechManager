@@ -51,7 +51,6 @@ namespace TechManager
         static Dictionary<string, GameObject> newNodes = new Dictionary<string, GameObject>();
 
         static bool renderWindow = false;
-        static GUIContent[] listItems;
         static GUIStyle listStyle;
         static ComboBox comboBoxControl;
         static IEnumerable<ConfigNode> techConfigs;
@@ -100,12 +99,13 @@ namespace TechManager
             }
             if (scene == GameScenes.SPACECENTER)
             {
-                //RenderingManager.AddToPostDrawQueue(0, OnGUI);
                 renderWindow = true;
                 cfgFile = GameDatabase.Instance.GetConfigNodes("TECHNOLOGY_TREE_DEFINITION").FirstOrDefault();
                 techConfigs = GameDatabase.Instance.GetConfigNodes("TECHNOLOGY_TREE_DEFINITION").Where(cfg => cfg.HasValue("id"));
-                listItems = techConfigs.Select(cfg => new GUIContent(cfg.GetValue("id"))).ToArray();
-                
+
+                IDictionary<String, Action<String>> actionDictionary = techConfigs.Select(cfg => new { Key = cfg.GetValue("id"), Value = new Action<String>(str => selectTree(str)) }).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+                actionDictionary.Add("Stock Tree", new Action<String>(str => selectTree(str)));
+                                                
                 string techTreeName = cfgFile.HasValue("id") ? cfgFile.GetValue("id") : "";
                 Debug.Log("Loading Tech Tree " + techTreeName);
                 
@@ -114,7 +114,7 @@ namespace TechManager
                 listStyle.onHover.background = listStyle.hover.background = new Texture2D(2, 2);
                 listStyle.padding.left = listStyle.padding.right = listStyle.padding.top = listStyle.padding.bottom = 4;
 
-                comboBoxControl = new ComboBox(new Rect(Screen.width / 2 - 250, Screen.height / 2, 350, 20), listItems[0], listItems, listStyle);
+                comboBoxControl = new ComboBox(new Rect(Screen.width / 2 - 250, Screen.height / 2, 350, 20), actionDictionary, listStyle);
             }
         }
 
@@ -127,7 +127,7 @@ namespace TechManager
                 GUILayout.BeginVertical();
                 GUILayout.BeginHorizontal();
                 GUILayout.Label("", GUILayout.ExpandWidth(true));
-                if (GUILayout.Button("Select", GUILayout.ExpandWidth(false))) selectTree();
+                if (GUILayout.Button("Select", GUILayout.ExpandWidth(false))) comboBoxControl.PerformSelectedAction();
                 GUILayout.EndHorizontal();
                 GUILayout.EndVertical();
                 GUILayout.EndArea();
@@ -136,11 +136,21 @@ namespace TechManager
             }
         }
 
-        void selectTree()
+        void selectTree(String tree)
         {
-            cfgFile = comboBoxControl.SelectedItemIndex < techConfigs.Count() ? techConfigs.ElementAt(comboBoxControl.SelectedItemIndex) : techConfigs.FirstOrDefault();
-            // save choice
+            ConfigNode cfgNode = new ConfigNode();
+            cfgNode.AddValue("techTreeID", tree);
+            cfgNode.AddValue("useStockTree", false);
+            cfgNode.Save(TechManagerSettings.PluginSaveFilePath);
+            InputLockManager.RemoveControlLock(lockID);
+            renderWindow = false;
+        }
 
+        void selectStockTree(String tree)
+        {
+            ConfigNode cfgNode = new ConfigNode();
+            cfgNode.AddValue("useStockTree", true);
+            cfgNode.Save(TechManagerSettings.PluginSaveFilePath);
             InputLockManager.RemoveControlLock(lockID);
             renderWindow = false;
         }
