@@ -102,14 +102,11 @@ namespace TechManager
                 ConfigNode techSettingsNode = TechManagerSettings.PluginSettingsFile;
                 if (techSettingsNode == null)
                 {
-                    renderWindow = true;
+                    
                     techConfigs = GameDatabase.Instance.GetConfigNodes("TECHNOLOGY_TREE_DEFINITION").Where(cfg => cfg.HasValue("id"));
 
                     IDictionary<String, Action<String>> actionDictionary = techConfigs.Select(cfg => new { Key = cfg.GetValue("id"), Value = new Action<String>(str => selectTree(str)) }).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
                     actionDictionary.Add("Stock Tree", new Action<String>(str => selectTree(str)));
-
-                    string techTreeName = cfgFile.HasValue("id") ? cfgFile.GetValue("id") : "";
-                    Debug.Log("Loading Tech Tree " + techTreeName);
 
                     listStyle = new GUIStyle();
                     listStyle.normal.textColor = Color.white;
@@ -117,6 +114,7 @@ namespace TechManager
                     listStyle.padding.left = listStyle.padding.right = listStyle.padding.top = listStyle.padding.bottom = 4;
 
                     comboBoxControl = new ComboBox(new Rect(Screen.width / 2 - 250, Screen.height / 2, 350, 20), actionDictionary, listStyle);
+                    renderWindow = true;
                 } else
                 {
                     string techTreeID;
@@ -129,7 +127,7 @@ namespace TechManager
 
         void OnGUI()
         {
-            if (renderWindow)
+            if (renderWindow && comboBoxControl != null)
             {
                 InputLockManager.SetControlLock(lockID);
                 GUILayout.BeginArea(new Rect(Screen.width / 2 - 250, Screen.height / 2 - 30, 500, 60), "TechManager Tree Selector", GUI.skin.window);
