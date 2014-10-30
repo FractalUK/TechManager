@@ -73,6 +73,8 @@ namespace TechManager
 
         void OnGameSceneLoadRequested(GameScenes scene)
         {
+            if (HighLogic.CurrentGame.Mode != Game.Modes.CAREER && HighLogic.CurrentGame.Mode != Game.Modes.SCIENCE_SANDBOX) return;
+
             if (scene == GameScenes.MAINMENU)
             {
                 // the TechRequired fields of the loaded parts are the only thing modified
