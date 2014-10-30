@@ -20,7 +20,6 @@ namespace TechManager
             get
             {
                 ConfigNode config = ConfigNode.Load(TechManagerSettings.PluginSaveFilePath);
-                config = new ConfigNode();
                 return config;
             }
         }
