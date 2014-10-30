@@ -106,7 +106,7 @@ namespace TechManager
                     techConfigs = GameDatabase.Instance.GetConfigNodes("TECHNOLOGY_TREE_DEFINITION").Where(cfg => cfg.HasValue("id"));
 
                     IDictionary<String, Action<String>> actionDictionary = techConfigs.Select(cfg => new { Key = cfg.GetValue("id"), Value = new Action<String>(str => selectTree(str)) }).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
-                    actionDictionary.Add("Stock Tree", new Action<String>(str => selectTree(str)));
+                    actionDictionary.Add("Stock Tree", new Action<String>(str => selectStockTree(str)));
 
                     listStyle = new GUIStyle();
                     listStyle.normal.textColor = Color.white;
