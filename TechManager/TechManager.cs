@@ -58,6 +58,7 @@ namespace TechManager
 
         void Start()
         {
+            Debug.Log("[TechManager]: Start");
             DontDestroyOnLoad(this.gameObject);
             GameEvents.onGameSceneLoadRequested.Add(new EventData<GameScenes>.OnEvent(OnGameSceneLoadRequested));
             GameEvents.onGUIRnDComplexSpawn.Add(new EventVoid.OnEvent(OnGUIRnDComplexSpawn));
@@ -66,6 +67,7 @@ namespace TechManager
 
         void OnDestroy()
         {
+            Debug.Log("[TechManager]: OnDestroy");
             GameEvents.onGameSceneLoadRequested.Remove(new EventData<GameScenes>.OnEvent(OnGameSceneLoadRequested));
             GameEvents.onGUIRnDComplexSpawn.Remove(new EventVoid.OnEvent(OnGUIRnDComplexSpawn));
             GameEvents.onGUIRnDComplexDespawn.Remove(new EventVoid.OnEvent(OnGUIRnDComplexDespawn));
@@ -73,6 +75,8 @@ namespace TechManager
 
         void OnGameSceneLoadRequested(GameScenes scene)
         {
+            if (HighLogic.CurrentGame == null)
+                return;
             if (HighLogic.CurrentGame.Mode != Game.Modes.CAREER && HighLogic.CurrentGame.Mode != Game.Modes.SCIENCE_SANDBOX) return;
 
             if (scene == GameScenes.MAINMENU)
@@ -104,7 +108,7 @@ namespace TechManager
                 ConfigNode techSettingsNode = TechManagerSettings.PluginSettingsFile;
                 if (techSettingsNode == null)
                 {
-                    
+
                     techConfigs = GameDatabase.Instance.GetConfigNodes("TECHNOLOGY_TREE_DEFINITION").Where(cfg => cfg.HasValue("id"));
 
                     IDictionary<String, Action<String>> actionDictionary = techConfigs.Select(cfg => new { Key = cfg.GetValue("id"), Value = new Action<String>(str => selectTree(str)) }).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
@@ -115,9 +119,10 @@ namespace TechManager
                     listStyle.onHover.background = listStyle.hover.background = new Texture2D(2, 2);
                     listStyle.padding.left = listStyle.padding.right = listStyle.padding.top = listStyle.padding.bottom = 4;
 
-                    comboBoxControl = new ComboBox(new Rect(Screen.width / 2 - 250, Screen.height / 2, 350, 20), actionDictionary, listStyle);
+                    comboBoxControl = new ComboBox(new Rect(Screen.width / 2 - 250, Screen.height / 2, 350, 30), actionDictionary, listStyle);
                     renderWindow = true;
-                } else
+                }
+                else
                 {
                     string techTreeID;
                     techTreeID = techSettingsNode.HasValue("techTreeID") ? techSettingsNode.GetValue("techTreeID") : null;
@@ -351,7 +356,7 @@ namespace TechManager
                 RDTech newTech = newNodeObj.GetComponent<RDTech>();
                 newTech.techID = cfgNode.GetValue("techID");
                 newTech.title = cfgNode.GetValue("title");
-                newTech.description = "kinda boring, really";
+                newTech.description = null;
                 newTech.scienceCost = 0;
                 newTech.hideIfNoParts = false;
 
