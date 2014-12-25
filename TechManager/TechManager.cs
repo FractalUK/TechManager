@@ -111,8 +111,8 @@ namespace TechManager
 
                     techConfigs = GameDatabase.Instance.GetConfigNodes("TECHNOLOGY_TREE_DEFINITION").Where(cfg => cfg.HasValue("id"));
 
-                    IDictionary<String, Action<String>> actionDictionary = techConfigs.Select(cfg => new { Key = cfg.GetValue("id"), Value = new Action<String>(str => selectTree(str)) }).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
-                    actionDictionary.Add("Stock Tree", new Action<String>(str => selectStockTree(str)));
+                    IDictionary<String, Action<String>> actionDictionary = techConfigs.Select(cfg => new { Key = cfg.GetValue("id"), Value = new Action<String>(str => { selectTree(str); createNewTree = true; })}).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+                    actionDictionary.Add("Stock Tree", new Action<String>(str => { selectStockTree(str); createNewTree = true; }));
 
                     listStyle = new GUIStyle();
                     listStyle.normal.textColor = Color.white;
@@ -175,8 +175,6 @@ namespace TechManager
             if (HighLogic.CurrentGame.Mode != Game.Modes.CAREER && HighLogic.CurrentGame.Mode != Game.Modes.SCIENCE_SANDBOX) return;
             if (cfgFile == null) return;
             complexActive = true;
-            prepForCreation = true;
-            createNewTree = true;
         }
 
         void OnGUIRnDComplexDespawn()
@@ -193,16 +191,11 @@ namespace TechManager
                 createNewTree = true;
             }
 
-            if (prepForCreation)
-            {
-                prepForCreation = false;
-                DeactivateStockTree();
-                PrepForCreation();
-            }
-
             if (createNewTree && cfgFile != null)
             {
                 createNewTree = false;
+                DeactivateStockTree();
+                PrepForCreation();                
                 RemoveNewNodes();
                 AssignParts();
                 UpdateTechState();
@@ -221,9 +214,6 @@ namespace TechManager
 
         static void PrepForCreation()
         {
-            // the nodes we created last time no longer exist, clear our list
-            newNodes.Clear();
-
             controller = (RDController)GameObject.FindObjectOfType(typeof(RDController));
 
             // lets start the view of the tech tree in a more reasonable place
@@ -257,15 +247,27 @@ namespace TechManager
 
         static void AssignParts()
         {
+            if (stockTechRequired == null)
+            {
+                stockTechRequired = new Dictionary<string, string>();
+                foreach (AvailablePart part in PartLoader.LoadedPartsList)
+                {
+                    if (stockTechRequired.ContainsKey(part.name))
+                    {
+                        print("Skipping duplicate part " + part.name);
+                        continue;
+                    }
+                    stockTechRequired.Add(part.name, part.TechRequired);
+                }
+            }
+
             // tech name assigned to a specific part
             Dictionary<string, string> techAssigned = new Dictionary<string, string>();
-
             foreach (ConfigNode cfgNode in cfgFile.GetNodes("NODE"))
             {
                 if (!cfgNode.HasNode("PARTS")) continue;
 
                 string techID = cfgNode.GetValue("techID");
-
                 foreach (string partname in cfgNode.GetNode("PARTS").GetValues("name"))
                 {
                     if (techAssigned.ContainsKey(partname))
@@ -276,17 +278,14 @@ namespace TechManager
                     techAssigned.Add(partname, techID);
                 }
             }
-
             foreach (AvailablePart part in PartLoader.LoadedPartsList)
             {
-                string techID = stockTechRequired[part.name];
-
+                string techID;
                 // parts assigned to techs via the cfg file have priority
                 if (techAssigned.ContainsKey(part.name))
-                {
                     techID = techAssigned[part.name];
-                }
-
+                else
+                    techID = stockTechRequired.ContainsKey(part.name) ? stockTechRequired[part.name] : part.TechRequired;
                 part.TechRequired = techID;
             }
         }
