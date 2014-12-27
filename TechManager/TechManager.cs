@@ -111,8 +111,8 @@ namespace TechManager
 
                     techConfigs = GameDatabase.Instance.GetConfigNodes("TECHNOLOGY_TREE_DEFINITION").Where(cfg => cfg.HasValue("id"));
 
-                    IDictionary<String, Action<String>> actionDictionary = techConfigs.Select(cfg => new { Key = cfg.GetValue("id"), Value = new Action<String>(str => { selectTree(str); createNewTree = true; })}).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
-                    actionDictionary.Add("Stock Tree", new Action<String>(str => { selectStockTree(str); createNewTree = true; }));
+                    IDictionary<String, Action<String>> actionDictionary = techConfigs.Select(cfg => new { Key = cfg.GetValue("id"), Value = new Action<String>(str => { saveSelectedTreeName(str); createNewTree = true; })}).ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+                    actionDictionary.Add("Stock Tree", new Action<String>(str => { saveSelectedStockTree(str); createNewTree = true; }));
 
                     listStyle = new GUIStyle();
                     listStyle.normal.textColor = Color.white;
@@ -128,6 +128,8 @@ namespace TechManager
                     techTreeID = techSettingsNode.HasValue("techTreeID") ? techSettingsNode.GetValue("techTreeID") : null;
                     Debug.Log("Loading Tech Tree " + techTreeID);
                     cfgFile = GameDatabase.Instance.GetConfigNodes("TECHNOLOGY_TREE_DEFINITION").Where(cfg => cfg.HasValue("id")).FirstOrDefault(cfg => cfg.GetValue("id") == techTreeID);
+                    if (cfgFile != null)
+                        createNewTree = true;
                 }
             }
         }
@@ -150,7 +152,7 @@ namespace TechManager
             }
         }
 
-        void selectTree(String tree)
+        void saveSelectedTreeName(String tree)
         {
             ConfigNode cfgNode = new ConfigNode();
             cfgNode.AddValue("techTreeID", tree);
@@ -161,7 +163,7 @@ namespace TechManager
             renderWindow = false;
         }
 
-        void selectStockTree(String tree)
+        void saveSelectedStockTree(String tree)
         {
             ConfigNode cfgNode = new ConfigNode();
             cfgNode.AddValue("useStockTree", true);
@@ -194,6 +196,7 @@ namespace TechManager
             if (createNewTree && cfgFile != null)
             {
                 createNewTree = false;
+                Debug.Log("[TechManager]: Reconstructiong science tree");
                 DeactivateStockTree();
                 PrepForCreation();                
                 RemoveNewNodes();
@@ -220,9 +223,11 @@ namespace TechManager
             typeof(RDGridArea).GetMethod("ZoomTo", BindingFlags.NonPublic | BindingFlags.Instance).Invoke(controller.gridArea, new object[] { 1f, true });
 
             RDNode startNode = Array.Find<RDNode>(stockNodes, x => x.gameObject.name == "node0_start");
-            if (startNode == null) startNode = stockNodes[0];
+            if (startNode == null) 
+                startNode = stockNodes[0];
 
-            if (prefabNode != null) DestroyImmediate(prefabNode);
+            if (prefabNode != null) 
+                DestroyImmediate(prefabNode);
 
             prefabNode = new GameObject("prefabTechObject");
             prefabNode.SetActive(false);
