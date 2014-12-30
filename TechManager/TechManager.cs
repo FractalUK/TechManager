@@ -177,6 +177,7 @@ namespace TechManager
             if (HighLogic.CurrentGame.Mode != Game.Modes.CAREER && HighLogic.CurrentGame.Mode != Game.Modes.SCIENCE_SANDBOX) return;
             if (cfgFile == null) return;
             complexActive = true;
+            createNewTree = true;
         }
 
         void OnGUIRnDComplexDespawn()
